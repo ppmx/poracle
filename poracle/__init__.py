@@ -1,2 +1,2 @@
-from .oracle import Decrypter
+from .oracle import OracleAttack
 from .interface import Interface

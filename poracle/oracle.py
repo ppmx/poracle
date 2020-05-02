@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+import os
+
 def remove_padding(plaintext):
     """ This function removes A VALID(!) PKCS#7 padding.
 
@@ -6,7 +10,11 @@ def remove_padding(plaintext):
     """
     return plaintext[:-plaintext[-1]]
 
-class Decrypter:
+class OracleAttack:
+    """ This class provides functions to encrypt and decrypt messages using
+    the padding oracle.
+    """
+
     def __init__(self, blocksize, interface, verbose=False):
         self.blocksize = blocksize
         self.interface = interface
@@ -66,7 +74,7 @@ class Decrypter:
 
         return plainblock
 
-    def attack(self, message):
+    def decrypt(self, ciphertext, remove_pad=False):
         """ This function decrypts an intercepted message by using the padding
         oracle defined in the given interface (except the first block, which
         can't be decrypted without controle over crypto IV.
@@ -77,36 +85,38 @@ class Decrypter:
 
         plaintext = b''
 
-        if len(message) % self.blocksize != 0:
+        if len(ciphertext) % self.blocksize != 0:
             raise Exception("message has to be a valid length")
 
-        while len(message) > self.blocksize:
-            plaintext = self._reveal_last_block(message) + plaintext
+        while len(ciphertext) > self.blocksize:
+            plaintext = self._reveal_last_block(ciphertext) + plaintext
 
             if self.verbose:
                 print("[+] revealed block:", plaintext)
 
             # cut last block. we have already decrypted it :)
-            message = message[:-self.blocksize]
-
-        return plaintext
-
-    def run(self, remove_pad=True):
-        """ This function serves the convenient way to use this padding oracle
-        attack implementation. You just define in __init__ a proper interface
-        and run this function. It returns the plaintext of the returned message
-        of the interception function.
-
-        Args:
-            remove_pad (bool): Set true if and only if you would like to get
-                               the PKCS#7 padding removed.
-        """
-
-        message = self.interface.intercept()
-        plaintext = self.attack(message)
+            ciphertext = ciphertext[:-self.blocksize]
 
         if remove_pad:
             plaintext = remove_padding(plaintext)
 
         return plaintext
 
+    def encrypt(self, plaintext, last_block=None):
+        """ This function returns the proper ciphertext for the given plaintext using
+        a padding oracle.
+        """
+
+        if len(plaintext) % self.blocksize != 0:
+            raise Exception("message has to be a valid length")
+
+        ciphertext = last_block if last_block else os.urandom(self.blocksize)
+        assert len(ciphertext) == self.blocksize
+
+        while len(plaintext) > 0:
+            plaintext, last_block = plaintext[:-self.blocksize], plaintext[-self.blocksize:]
+
+            tux = self._reveal_last_block(bytes([0]) * 16 + ciphertext[:16])
+            ciphertext = bytes(a^b for a, b in zip(tux, last_block)) + ciphertext
+
+        return ciphertext

@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name = 'poracle',
-    version = '1.0.0',
+    version = '1.0.1',
     author = 'mx',
     author_email = 'ppmx@users.noreply.github.com',
     url = 'https://github.com/ppmx/poracle',

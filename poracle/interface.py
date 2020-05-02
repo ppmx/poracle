@@ -1,4 +1,8 @@
+#!/usr/bin/env python3
+
 class Interface:
+    """ Defines the interface of the padding oracle. """
+
     def oracle(self, ciphertext):
         """ This function expects a ciphertext and returns true if there is
         no padding error and false otherwise.

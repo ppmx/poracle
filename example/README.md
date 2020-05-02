@@ -28,4 +28,4 @@ Decrypt the string, get the query!
 
 ## Procedure
 
-Run `service.go` and start `exploit.py` to demonstrate the attack.
+Run `service.go` and start `exploit.py` to demonstrate the attack. You first have to install the poracle package.
